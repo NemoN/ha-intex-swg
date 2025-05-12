@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -16,7 +17,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     host = entry.data[CONF_HOST]
     interval = entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-    client = IntexSWGApiClient(host=host, session=hass.helpers.aiohttp_client.async_get_clientsession())
+    client = IntexSWGApiClient(host=host, session=async_get_clientsession(hass))
 
     coordinator = DataUpdateCoordinator(
         hass,

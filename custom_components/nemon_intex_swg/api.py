@@ -11,7 +11,7 @@ class IntexSWGApiClient:
 
     async def async_update(self) -> None:
         try:
-            url = f"http://{self._host}/api/status"
+            url = f"http://{self._host}/api/v1/intex/swg/status"
             response = await self._session.get(url)
             result = await response.json()
             # Nur der eigentliche Datenblock
