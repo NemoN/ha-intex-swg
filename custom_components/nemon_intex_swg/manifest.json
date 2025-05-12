@@ -1,0 +1,10 @@
+{
+    "domain": "nemon_intex_swg",
+    "name": "Intex Salt Water Chlorine Generators (SWG)",
+    "version": "0.0.1",
+    "documentation": "https://github.com/NemoN/ha-intex-swg",
+    "requirements": ["aiohttp>=3.8.0"],
+    "dependencies": [],
+    "codeowners": ["@NemoN"],
+    "config_flow": true
+  }
