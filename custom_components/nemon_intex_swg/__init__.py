@@ -1,6 +1,7 @@
 import logging
 
 from datetime import timedelta
+from datetime import datetime
 
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
@@ -53,8 +54,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if reboot_enabled:
         _LOGGER.debug("Restart enabled: %s min", reboot_interval)
+
+        client._next_reboot_time = datetime.now() + timedelta(minutes=reboot_interval)
+
         async def _reboot_interval(now):
             _LOGGER.debug("Restart: execute async_reboot")
+
+            client._next_reboot_time = datetime.now() + timedelta(minutes=reboot_interval)
+
             try:
                 await client.async_reboot()
             except Exception as err:

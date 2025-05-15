@@ -1,6 +1,8 @@
 import logging
 import aiohttp
 
+from datetime import datetime
+
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 _LOGGER = logging.getLogger(__name__)
@@ -20,6 +22,12 @@ class IntexSWGApiClient:
             response.raise_for_status()
             result = await response.json()
             self.data = result.get("data", {})
+
+            next_rb = getattr(self, "_next_reboot_time", None)
+            if next_rb:
+                delta = next_rb - datetime.now()
+                _LOGGER.debug("Time until next reboot: %s", delta)
+         
         except aiohttp.ClientResponseError as err:
             _LOGGER.error("HTTP error fetching data: %s", err)
             raise UpdateFailed(f"HTTP error: {err}")
@@ -32,7 +40,7 @@ class IntexSWGApiClient:
 
     async def async_reboot(self) -> None:
         url = f"http://{self._host}:{self._port}/api/v1/intex/swg/reboot"
-        
+
         payload = {"data": {"reboot": "yes"}}
         _LOGGER.debug("POST interval reboot: URL=%s, payload=%s", url, payload)
 
