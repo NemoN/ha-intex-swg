@@ -1,20 +1,45 @@
 import logging
 import aiohttp
 
+from homeassistant.helpers.update_coordinator import UpdateFailed
+
 _LOGGER = logging.getLogger(__name__)
 
 class IntexSWGApiClient:
-    def __init__(self, host: str, session: aiohttp.ClientSession) -> None:
+    def __init__(self, host: str, port: int, session: aiohttp.ClientSession) -> None:
         self._host = host
+        self._port = port
         self._session = session
         self.data = {}
 
     async def async_update(self) -> None:
+        url = f"http://{self._host}:{self._port}/api/v1/intex/swg/status"
+
         try:
-            url = f"http://{self._host}/api/v1/intex/swg/status"
             response = await self._session.get(url)
+            response.raise_for_status()
             result = await response.json()
-            # Nur der eigentliche Datenblock
             self.data = result.get("data", {})
+        except aiohttp.ClientResponseError as err:
+            _LOGGER.error("HTTP error fetching data: %s", err)
+            raise UpdateFailed(f"HTTP error: {err}")
         except aiohttp.ClientError as err:
             _LOGGER.error("Error fetching data: %s", err)
+            raise UpdateFailed(f"Error connecting to {self._host}:{self._port}: {err}")
+        except ValueError as err:
+            _LOGGER.error("Error parsing JSON: %s", err)
+            raise UpdateFailed(f"Invalid JSON response: {err}")
+
+    async def async_reboot(self) -> None:
+        url = f"http://{self._host}:{self._port}/api/v1/intex/swg/reboot"
+        
+        payload = {"data": {"reboot": "yes"}}
+        _LOGGER.debug("POST interval reboot: URL=%s, payload=%s", url, payload)
+
+        try:
+            await self._session.post(url, json=payload)
+        except aiohttp.ClientError as err:
+            # _LOGGER.error("Error sending reboot command: %s", err)
+            pass
+        except Exception as err:
+            _LOGGER.error("Unexpected error sending reboot command: %s", err)
