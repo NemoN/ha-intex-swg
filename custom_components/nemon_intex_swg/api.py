@@ -23,10 +23,12 @@ class IntexSWGApiClient:
             result = await response.json()
             self.data = result.get("data", {})
 
-            next_rb = getattr(self, "_next_reboot_time", None)
-            if next_rb:
-                delta = next_rb - datetime.now()
-                _LOGGER.debug("Time until next reboot: %s", delta)
+            # Debug: time remaining until next reboot (only if reboot is enabled)
+            if getattr(self, "_reboot_enabled", False):
+                next_rb = getattr(self, "_next_reboot_time", None)
+                if next_rb:
+                    delta = next_rb - datetime.now()
+                    _LOGGER.debug("Time until next reboot: %s", delta)            
          
         except aiohttp.ClientResponseError as err:
             _LOGGER.error("HTTP error fetching data: %s", err)
