@@ -1,8 +1,31 @@
 # default_config:
+
 frontend:
-http:
+
+input_boolean:
+  wohnzimmer_dummy_schalter:
+    name: Dummy Wohnzimmer Schalter
+    initial: off
+
+template:
+  - sensor:
+      - name: "Wohnzimmer Leistung"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% if is_state('input_boolean.wohnzimmer_dummy_schalter', 'on') %}
+            10
+          {% else %}
+            0
+          {% endif %}
 
 sensor:
+  - platform: integration
+    source: sensor.wohnzimmer_leistung
+    name: "Wohnzimmer Energie"
+    unit_prefix: k
+    round: 3
 
 homeassistant:
   debug: true
@@ -11,3 +34,9 @@ logger:
   default: warning
   logs:
     custom_components.nemon_intex_swg: debug
+    homeassistant.helpers.update_coordinator: debug
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - ::1
