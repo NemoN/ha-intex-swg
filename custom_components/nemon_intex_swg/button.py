@@ -13,6 +13,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     data = hass.data[DOMAIN][entry.entry_id]
     client = data["client"]
     coordinator = data["coordinator"]
+    
     async_add_entities([IntexSWGRebootButton(client, coordinator)])
 
 class IntexSWGRebootButton(CoordinatorEntity, ButtonEntity):

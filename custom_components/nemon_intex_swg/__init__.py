@@ -9,11 +9,18 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.event import async_track_time_interval
 
 from .const import (
-    DOMAIN, PLATFORMS,
-    CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL,
-    CONF_REBOOT_ENABLED, CONF_REBOOT_INTERVAL,
-    DEFAULT_PORT, DEFAULT_SCAN_INTERVAL,
-    DEFAULT_REBOOT_ENABLED, DEFAULT_REBOOT_INTERVAL,
+    DOMAIN, 
+    PLATFORMS,
+    CONF_HOST, 
+    CONF_PORT, 
+    CONF_SCAN_INTERVAL,
+    CONF_REBOOT_ENABLED, 
+    CONF_REBOOT_INTERVAL,
+    CONF_POWER_ENTITY,
+    DEFAULT_PORT, 
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_REBOOT_ENABLED, 
+    DEFAULT_REBOOT_INTERVAL,
 )
 from .api import IntexSWGApiClient
 
@@ -28,10 +35,8 @@ async def _async_update_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     hass.config_entries.async_update_entry(entry, title=new_title)
     await hass.config_entries.async_reload(entry.entry_id)
 
-
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     return True
-
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     host = entry.options.get(CONF_HOST, entry.data.get(CONF_HOST))
@@ -53,6 +58,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         host=host,
         port=port,
         session=async_get_clientsession(hass),
+        hass=hass,
+        power_entity_id=entry.options.get(CONF_POWER_ENTITY),        
     )
     coordinator = DataUpdateCoordinator(
         hass, _LOGGER,
@@ -79,7 +86,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         client._next_reboot_time = datetime.now() + timedelta(minutes=reboot_interval)
 
         async def _reboot_interval(now):
-            _LOGGER.debug("Starting reboot now")
+            _LOGGER.debug("Send reboot cmd now")
             try:
                 await client.async_reboot()
             except Exception as err:

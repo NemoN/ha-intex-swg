@@ -7,7 +7,8 @@
             "port": "Port",
             "scan_interval": "Abfrageintervall (Sekunden)",
             "reboot_enabled": "Auto-Neustart aktivieren",
-            "reboot_interval": "Neustart-Intervall (Minuten)"
+            "reboot_interval": "Neustart-Intervall (Minuten)",
+            "power_entity": "Power Sensor"
           }
         }
       }
@@ -20,10 +21,11 @@
             "port": "Port",
             "scan_interval": "Abfrageintervall (Sekunden)",
             "reboot_enabled": "Auto-Neustart aktivieren",
-            "reboot_interval": "Neustart-Intervall (Minuten)"
+            "reboot_interval": "Neustart-Intervall (Minuten)",
+            "power_entity": "Power Sensor"
           }
         }
       }
     },
-    "title": "Intex SWG IoT"
+    "title": "Intex SWG Integration"
   }

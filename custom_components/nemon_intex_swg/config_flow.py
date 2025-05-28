@@ -1,61 +1,118 @@
+from __future__ import annotations
+
+import logging
+
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.core import callback
+from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import selector
+
 from .const import (
-    DOMAIN, CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL,
-    CONF_REBOOT_ENABLED, CONF_REBOOT_INTERVAL,
-    DEFAULT_PORT, DEFAULT_SCAN_INTERVAL,
-    DEFAULT_REBOOT_ENABLED, DEFAULT_REBOOT_INTERVAL,
+    CONF_HOST, 
+    CONF_PORT, 
+    CONF_SCAN_INTERVAL,
+    CONF_REBOOT_ENABLED, 
+    CONF_REBOOT_INTERVAL,
+    CONF_POWER_ENTITY, 
+    DEFAULT_PORT, 
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_POWER_ENTITY,
+    DEFAULT_REBOOT_ENABLED, 
+    DEFAULT_REBOOT_INTERVAL,
+    DOMAIN,
+) # pylint:disable=unused-import
+
+CONFIG_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Required(CONF_PORT, default=DEFAULT_PORT): cv.port,
+    }
 )
+
+OPTIONS_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Required(CONF_PORT, default=DEFAULT_PORT): cv.port,
+        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
+        vol.Optional(CONF_REBOOT_ENABLED, default=DEFAULT_REBOOT_ENABLED): cv.boolean,
+        vol.Optional(CONF_REBOOT_INTERVAL, default=DEFAULT_REBOOT_INTERVAL): cv.positive_int,
+        vol.Optional(CONF_POWER_ENTITY, default=None): vol.Any(
+            None,
+            selector.EntitySelector(
+                selector.EntitySelectorConfig(
+                    domain=["sensor"],
+                    device_class=["power"],
+                )
+            )
+        )
+    }
+)
+
+_LOGGER = logging.getLogger(__name__)
 
 class IntexSWGConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
-    async def async_step_user(self, user_input=None):
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: config_entries.ConfigEntry,
+    ) -> OptionsFlowHandler:
+        """Get the options flow."""
+        return OptionsFlowHandler(config_entry)    
+
+    async def async_step_user(self, user_input: dict | None = None) -> FlowResult:
+        """Handle a flow initialized by the user."""
         errors = {}
         
-        if user_input:
-            options = {
-                CONF_HOST: user_input[CONF_HOST],
-                CONF_PORT: user_input.get(CONF_PORT, DEFAULT_PORT),
-                CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
-                CONF_REBOOT_ENABLED: user_input.get(CONF_REBOOT_ENABLED, DEFAULT_REBOOT_ENABLED),
-                CONF_REBOOT_INTERVAL: user_input.get(CONF_REBOOT_INTERVAL, DEFAULT_REBOOT_INTERVAL),
+        if user_input is not None:
+            data = {
+                CONF_HOST: user_input.get(CONF_HOST),
+                CONF_PORT: user_input.get(CONF_PORT, DEFAULT_PORT)
             }
+
             return self.async_create_entry(
-                title=f"{options[CONF_HOST]}:{options[CONF_PORT]}",
-                data=options,
-                options=options,
+                title=f"{data[CONF_HOST]}:{data[CONF_PORT]}",
+                data=data
             )
 
-        schema = vol.Schema({
-            vol.Required(CONF_HOST): str,
-            vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
-            vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): int,
-            vol.Optional(CONF_REBOOT_ENABLED, default=DEFAULT_REBOOT_ENABLED): bool,
-            vol.Optional(CONF_REBOOT_INTERVAL, default=DEFAULT_REBOOT_INTERVAL): int,
-        })
-        return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
-
-    @staticmethod
-    def async_get_options_flow(entry):
-        return OptionsFlowHandler(entry)
+        return self.async_show_form(
+            step_id="user", data_schema=CONFIG_SCHEMA, errors=errors
+        )
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    # def __init__(self, config_entry):
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        # self.config_entry = config_entry
-        super().__init__()
+    """Options for the component."""
 
-    async def async_step_init(self, user_input=None):
-        if user_input:
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Init object."""
+        self.entry = config_entry
+
+    async def async_step_init(self, user_input: dict | None = None) -> FlowResult:
+        """Manage the options."""
+        if user_input is not None:          
             return self.async_create_entry(title="", data=user_input)
-        current = self.config_entry.options
-        schema = vol.Schema({
-            vol.Required(CONF_HOST, default=current.get(CONF_HOST)): str,
-            vol.Required(CONF_PORT, default=current.get(CONF_PORT, DEFAULT_PORT)): int,
-            vol.Required(CONF_SCAN_INTERVAL, default=current.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)): int,
-            vol.Required(CONF_REBOOT_ENABLED, default=current.get(CONF_REBOOT_ENABLED, DEFAULT_REBOOT_ENABLED)): bool,
-            vol.Required(CONF_REBOOT_INTERVAL, default=current.get(CONF_REBOOT_INTERVAL, DEFAULT_REBOOT_INTERVAL)): int,
-        })
-        return self.async_show_form(step_id="init", data_schema=schema)
+
+        host = self.entry.options.get(CONF_HOST, self.entry.data[CONF_HOST])
+        port = self.entry.options.get(CONF_PORT, self.entry.data[CONF_PORT])
+        scan_int = self.entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        reboot =  self.entry.options.get(CONF_REBOOT_ENABLED, True)
+        reboot_int = self.entry.options.get(CONF_REBOOT_INTERVAL, DEFAULT_REBOOT_INTERVAL)
+        power = self.entry.options.get(CONF_POWER_ENTITY, DEFAULT_POWER_ENTITY)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=self.add_suggested_values_to_schema(
+                OPTIONS_SCHEMA,
+                {
+                    CONF_HOST: host,
+                    CONF_PORT: port,
+                    CONF_SCAN_INTERVAL: scan_int,
+                    CONF_REBOOT_ENABLED: reboot,
+                    CONF_REBOOT_INTERVAL: reboot_int,
+                    CONF_POWER_ENTITY: power,
+                },
+            ),
+        )

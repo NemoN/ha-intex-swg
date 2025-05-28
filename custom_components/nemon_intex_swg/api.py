@@ -8,11 +8,13 @@ from homeassistant.helpers.update_coordinator import UpdateFailed
 _LOGGER = logging.getLogger(__name__)
 
 class IntexSWGApiClient:
-    def __init__(self, host: str, port: int, session: aiohttp.ClientSession) -> None:
+    def __init__(self, host: str, port: int, session: aiohttp.ClientSession, hass=None, power_entity_id=None) -> None:
         self._host = host
         self._port = port
         self._session = session
-        self.data = {}
+        self._hass = hass
+        self._power_entity_id = power_entity_id
+        self.data: dict = {}        
 
     async def async_update(self) -> None:
         url = f"http://{self._host}:{self._port}/api/v1/intex/swg/status"
@@ -28,7 +30,15 @@ class IntexSWGApiClient:
                 next_rb = getattr(self, "_next_reboot_time", None)
                 if next_rb:
                     delta = next_rb - datetime.now()
-                    _LOGGER.debug("Time until next reboot: %s", delta)            
+                    _LOGGER.debug("Time until next reboot: %s", delta)
+
+            # Opt: if a power sensor was configured, read its current state and store it
+            if self._power_entity_id and self._hass:
+               state = self._hass.states.get(self._power_entity_id)
+               try:
+                   self.data["power"] = float(state.state)
+               except Exception:
+                   self.data["power"] = None
          
         except aiohttp.ClientResponseError as err:
             _LOGGER.error("HTTP error fetching data: %s", err)
@@ -39,6 +49,8 @@ class IntexSWGApiClient:
         except ValueError as err:
             _LOGGER.error("Error parsing JSON: %s", err)
             raise UpdateFailed(f"Invalid JSON response: {err}")
+        
+        return self.data
 
     async def async_reboot(self) -> None:
         url = f"http://{self._host}:{self._port}/api/v1/intex/swg/reboot"
