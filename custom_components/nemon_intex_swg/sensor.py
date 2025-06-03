@@ -7,7 +7,15 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, CONF_POWER_ENTITY
+from .const import (
+    DOMAIN, 
+    CONF_POWER_ENTITY, 
+    CONF_HOST, 
+    CONF_PORT,
+    DEVICE_NAME,
+    DEVICE_MANUFACTURER,
+    DEVICE_MODEL
+)
 
 SENSOR_TYPES = [
     (("display", "brightness"), "Display Brightness"),
@@ -36,20 +44,20 @@ async def async_setup_entry(hass, entry, async_add_entities):
     entities = []
 
     for path, name in SENSOR_TYPES:
-        entities.append(IntexSWGSensor(client, coordinator, path, name))
+        entities.append(IntexSWGSensor(client, coordinator, path, name, entry))
 
     for path, name in BOOL_SENSOR_TYPES:
-        entities.append(IntexSWGBinarySensor(client, coordinator, path, name))
+        entities.append(IntexSWGBinarySensor(client, coordinator, path, name, entry))
 
     # Power sensor: only add if user configured one
     power_entity_id = entry.options.get(CONF_POWER_ENTITY)
     if power_entity_id:
-        entities.append(IntexSWGPowerSensor(coordinator, entry.entry_id))
+        entities.append(IntexSWGPowerSensor(coordinator, entry))
 
     async_add_entities(entities, update_before_add=True)
 
 class IntexSWGSensor(CoordinatorEntity, SensorEntity):
-    def __init__(self, client, coordinator, path, name):
+    def __init__(self, client, coordinator, path, name, entry):
         super().__init__(coordinator)
         self._client = client
         self._path = path
@@ -59,6 +67,18 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
 
         if self._path == ("system", "uptime_seconds"):
             self._attr_unit_of_measurement = "s"
+
+        # device_info
+        host = entry.data.get(CONF_HOST)
+        port = entry.data.get(CONF_PORT)
+
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.entry_id)},
+            "name": f"{DEVICE_NAME} ({host}:{port})",
+            "manufacturer": DEVICE_MANUFACTURER,
+            "model": DEVICE_MODEL,
+            "connections": {("ip", host)}
+        }            
 
     @property
     def state(self):
@@ -72,12 +92,24 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
         return bool(self._client.data)
 
 class IntexSWGBinarySensor(CoordinatorEntity, BinarySensorEntity):
-    def __init__(self, client, coordinator, path, name):
+    def __init__(self, client, coordinator, path, name, entry):
         super().__init__(coordinator)
         self._client = client
         self._path = path
         self._attr_name = name
         self._attr_unique_id = f"{coordinator.name}_{'_'.join(path)}"
+
+        # device_info
+        host = entry.data.get(CONF_HOST)
+        port = entry.data.get(CONF_PORT)
+
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.entry_id)},
+            "name": f"{DEVICE_NAME} ({host}:{port})",
+            "manufacturer": DEVICE_MANUFACTURER,
+            "model": DEVICE_MODEL,
+            "connections": {("ip", host)}
+        }            
 
     @property
     def is_on(self) -> bool:
@@ -95,11 +127,23 @@ class IntexSWGBinarySensor(CoordinatorEntity, BinarySensorEntity):
         return bool(self._client.data)
 
 class IntexSWGPowerSensor(CoordinatorEntity, SensorEntity):
-    def __init__(self, coordinator, entry_id: str):
+    def __init__(self, coordinator, entry):
         super().__init__(coordinator)
         self._attr_name = "Power"
-        self._attr_unique_id = f"{entry_id}_power"
+        self._attr_unique_id = f"{entry.entry_id}_power"
         self._attr_unit_of_measurement = "W"
+
+        # device_info
+        host = entry.data.get(CONF_HOST)
+        port = entry.data.get(CONF_PORT)
+
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.entry_id)},
+            "name": f"{DEVICE_NAME} ({host}:{port})",
+            "manufacturer": DEVICE_MANUFACTURER,
+            "model": DEVICE_MODEL,
+            "connections": {("ip", host)}
+        }
 
     @property
     def state(self):

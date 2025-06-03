@@ -5,7 +5,15 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_call_later
-from .const import DOMAIN
+
+from .const import (
+    DOMAIN,
+    CONF_HOST,
+    CONF_PORT,
+    DEVICE_NAME,
+    DEVICE_MANUFACTURER,
+    DEVICE_MODEL    
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,15 +22,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     client = data["client"]
     coordinator = data["coordinator"]
     
-    async_add_entities([IntexSWGRebootButton(client, coordinator)])
+    async_add_entities([IntexSWGRebootButton(client, coordinator, entry)])
 
 class IntexSWGRebootButton(CoordinatorEntity, ButtonEntity):
-    def __init__(self, client, coordinator):
+    def __init__(self, client, coordinator, entry):
         super().__init__(coordinator)
-
         self._client = client
         self._attr_name = "Reboot ESP32"
         self._attr_unique_id = f"{coordinator.name}_reboot"
+
+        # device_info
+        host = entry.data.get(CONF_HOST)
+        port = entry.data.get(CONF_PORT)
+
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.entry_id)},
+            "name": f"{DEVICE_NAME} ({host}:{port})",
+            "manufacturer": DEVICE_MANUFACTURER,
+            "model": DEVICE_MODEL,
+            "connections": {("ip", host)}
+        }            
 
     async def async_press(self) -> None:
         url = f"http://{self._client._host}:{self._client._port}/api/v1/intex/swg/reboot"

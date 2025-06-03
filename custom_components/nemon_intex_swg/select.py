@@ -4,7 +4,15 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from .const import DOMAIN
+
+from .const import (
+    DOMAIN, 
+    CONF_HOST,
+    CONF_PORT,
+    DEVICE_NAME,
+    DEVICE_MANUFACTURER,
+    DEVICE_MODEL
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -12,15 +20,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     data = hass.data[DOMAIN][entry.entry_id]
     client = data["client"]
     coordinator = data["coordinator"]
-    async_add_entities([IntexSWGPowerSelect(client, coordinator)])
+    async_add_entities([IntexSWGPowerSelect(client, coordinator, entry)])
 
 class IntexSWGPowerSelect(CoordinatorEntity, SelectEntity):
-    def __init__(self, client, coordinator):
+    def __init__(self, client, coordinator, entry):
         super().__init__(coordinator)
         self._client = client
         self._attr_name = "Power"
         self._attr_unique_id = f"{coordinator.name}_power"
         self._attr_options = ["ON", "OFF", "STANDBY"]
+
+        # device_info
+        host = entry.data.get(CONF_HOST)
+        port = entry.data.get(CONF_PORT)
+
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.entry_id)},
+            "name": f"{DEVICE_NAME} ({host}:{port})",
+            "manufacturer": DEVICE_MANUFACTURER,
+            "model": DEVICE_MODEL,
+            "connections": {("ip", host)}
+        }        
 
     @property
     def current_option(self):
