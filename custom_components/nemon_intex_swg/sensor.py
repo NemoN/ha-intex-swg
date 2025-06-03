@@ -12,6 +12,7 @@ from .const import DOMAIN, CONF_POWER_ENTITY
 SENSOR_TYPES = [
     (("display", "brightness"), "Display Brightness"),
     (("display", "current_code"), "Display Code"),
+    (("system", "uptime_seconds"), "Uptime (seconds)"),
 ]
 
 BOOL_SENSOR_TYPES = [
@@ -55,6 +56,9 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
         self._attr_name = name
         # unique_id: e.g. "nemon_intex_swg-XYZ_display_brightness"
         self._attr_unique_id = f"{coordinator.name}_{'_'.join(path)}"
+
+        if self._path == ("system", "uptime_seconds"):
+            self._attr_unit_of_measurement = "s"
 
     @property
     def state(self):
@@ -110,7 +114,7 @@ class IntexSWGPowerSensor(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         p = self.coordinator.data.get("power") if self.coordinator.data else None
-        
+
         return isinstance(p, (int, float))
     
     @callback
