@@ -26,6 +26,9 @@ class IntexSWGApiClient:
         self._cache_duration = timedelta(seconds=15)
         self._last_fetch: datetime | None = None
 
+    def clear_cache(self) -> None:
+        self._last_fetch = None
+
     async def async_update(self) -> dict:
         """Fetch data from the API, caching the result for 15 seconds."""
         now = datetime.now()

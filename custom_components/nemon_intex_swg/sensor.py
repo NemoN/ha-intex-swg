@@ -6,6 +6,7 @@ from homeassistant.core import callback
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 
 from .const import (
     DOMAIN, 
@@ -65,8 +66,12 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
         # unique_id: e.g. "nemon_intex_swg-XYZ_display_brightness"
         self._attr_unique_id = f"{coordinator.name}_{'_'.join(path)}"
 
+        # _LOGGER.debug("Init IntexSWGSensor: path=%s", self._path)
+
         if self._path == ("system", "uptime_seconds"):
-            self._attr_unit_of_measurement = "s"
+            self._attr_native_unit_of_measurement = "s"
+            self._attr_device_class = SensorDeviceClass.DURATION
+            self._attr_state_class = SensorStateClass.MEASUREMENT
 
         # device_info
         host = entry.data.get(CONF_HOST)
@@ -131,7 +136,9 @@ class IntexSWGPowerSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._attr_name = "Power"
         self._attr_unique_id = f"{entry.entry_id}_power"
-        self._attr_unit_of_measurement = "W"
+        #self._attr_unit_of_measurement = "W"
+        self._attr_native_unit_of_measurement = "W"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
         # device_info
         host = entry.data.get(CONF_HOST)
@@ -151,7 +158,7 @@ class IntexSWGPowerSensor(CoordinatorEntity, SensorEntity):
         #return self.coordinator.data.get("power") if self.coordinator.data else None
         p = self.coordinator.data.get("power") if self.coordinator.data else None
 
-        _LOGGER.debug("PowerSensor.state called, coordinator.data=%s → %s", self.coordinator.data, p)
+        # _LOGGER.debug("PowerSensor.state called, coordinator.data=%s → %s", self.coordinator.data, p)
 
         return p
 
@@ -163,6 +170,6 @@ class IntexSWGPowerSensor(CoordinatorEntity, SensorEntity):
     
     @callback
     def _handle_coordinator_update(self) -> None:
-        _LOGGER.debug("Coordinator new data: %s", self.coordinator.data)
+        # _LOGGER.debug("Coordinator new data: %s", self.coordinator.data)
 
         super()._handle_coordinator_update()    

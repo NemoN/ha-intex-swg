@@ -45,6 +45,7 @@ class IntexSWGPowerSelect(CoordinatorEntity, SelectEntity):
     @property
     def current_option(self):
         power = self._client.data.get("status", {}).get("power")
+        # _LOGGER.debug("Current power (client.data): %s", power)
         return power.upper() if isinstance(power, str) else None
 
     async def async_select_option(self, option: str) -> None:
@@ -56,4 +57,10 @@ class IntexSWGPowerSelect(CoordinatorEntity, SelectEntity):
         _LOGGER.debug("POST select Power: URL=%s, payload=%s", url, payload)
         
         await self._client._session.post(url, json=payload)
+
+        try:
+            self._client.clear_cache()
+        except Exception as err:
+            _LOGGER.warning("Can't clear cache: %s", err)
+
         await self.coordinator.async_request_refresh()
