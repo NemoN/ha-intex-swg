@@ -19,4 +19,6 @@ DEFAULT_POWER_ENTITY = None
 DEFAULT_REBOOT_ENABLED = False
 DEFAULT_REBOOT_INTERVAL = 720  # minutes (12 hours)
 
-PLATFORMS = ["sensor", "select", "button"]
+PLATFORMS = ["sensor", "button"]
+
+# https://pictogrammers.com/library/mdi/

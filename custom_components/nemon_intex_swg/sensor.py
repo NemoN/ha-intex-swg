@@ -73,6 +73,12 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
             self._attr_device_class = SensorDeviceClass.DURATION
             self._attr_state_class = SensorStateClass.MEASUREMENT
 
+        if self._path == ("display", "brightness"):
+            self._attr_icon = "mdi:brightness-6"
+
+        if self._path == ("display", "current_code"):
+            self._attr_icon = "mdi:counter"
+
         # device_info
         host = entry.data.get(CONF_HOST)
         port = entry.data.get(CONF_PORT)
@@ -103,6 +109,36 @@ class IntexSWGBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self._path = path
         self._attr_name = name
         self._attr_unique_id = f"{coordinator.name}_{'_'.join(path)}"
+
+        if self._path == ("status", "boost"):
+            self._attr_icon = "mdi:lightning-bolt-circle"
+
+        if self._path == ("display", "status"):
+            self._attr_icon = "mdi:monitor"
+
+        if self._path == ("status", "high_salt"):
+            self._attr_icon = "mdi:alarm-light"
+
+        if self._path == ("status", "low_salt"):
+            self._attr_icon = "mdi:alarm-light-outline"
+
+        if self._path == ("status", "pump_low_flow"):
+            self._attr_icon = "mdi:waves"
+
+        if self._path == ("status", "o3_generation"):
+            self._attr_icon = "mdi:water-check-outline"
+
+        if self._path == ("mode", "programming"):
+            self._attr_icon = "mdi:timer-edit"
+
+        if self._path == ("mode", "working"):
+            self._attr_icon = "mdi:run-fast"
+
+        if self._path == ("status", "service"):
+            self._attr_icon = "mdi:account-wrench"
+
+        if self._path == ("status", "sleep"):
+            self._attr_icon = "mdi:bed-clock"
 
         # device_info
         host = entry.data.get(CONF_HOST)
@@ -139,6 +175,7 @@ class IntexSWGPowerSensor(CoordinatorEntity, SensorEntity):
         #self._attr_unit_of_measurement = "W"
         self._attr_native_unit_of_measurement = "W"
         self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:transmission-tower"
 
         # device_info
         host = entry.data.get(CONF_HOST)
