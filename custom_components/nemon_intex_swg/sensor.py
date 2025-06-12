@@ -21,7 +21,7 @@ from .const import (
 SENSOR_TYPES = [
     (("display", "brightness"), "Display Brightness"),
     (("display", "current_code"), "Display Code"),
-    (("system", "uptime_seconds"), "Uptime (seconds)"),
+    (("system", "uptime_seconds"), "Uptime (DD:HH:MM)"),
 ]
 
 BOOL_SENSOR_TYPES = [
@@ -69,7 +69,8 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
         # _LOGGER.debug("Init IntexSWGSensor: path=%s", self._path)
 
         if self._path == ("system", "uptime_seconds"):
-            self._attr_native_unit_of_measurement = "s"
+            #self._attr_native_unit_of_measurement = "s"
+            self._attr_native_unit_of_measurement = None
             self._attr_device_class = SensorDeviceClass.DURATION
             self._attr_state_class = SensorStateClass.MEASUREMENT
 
@@ -93,6 +94,15 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def state(self):
+        if self._path == ("system", "uptime_seconds"):
+            total_seconds = self._client.data.get("system", {}).get("uptime_seconds", 0)
+            days = total_seconds // 86400
+            hours = (total_seconds % 86400) // 3600
+            minutes = (total_seconds % 3600) // 60
+
+            return f"{days:02d}:{hours:02d}:{minutes:02d}"
+        
+        # other entities
         data = self._client.data
         for key in self._path:
             data = data.get(key, {})
