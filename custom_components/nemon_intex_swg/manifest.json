@@ -2,11 +2,12 @@
   "domain": "nemon_intex_swg",
   "name": "Intex Salt Water Chlorine Generators (SWG)",
   "codeowners": ["@NemoN"],
+  "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/NemoN/ha-intex-swg",
-  "version": "1.1.1",
   "integration_type": "device",
+  "issue_tracker": "https://github.com/NemoN/ha-intex-swg/issues",
   "iot_class": "local_polling",
-  "requirements": ["aiohttp>=3.8.0"],
-  "config_flow": true
+  "requirements": [],
+  "version": "1.1.1"
 }
