@@ -1,9 +1,11 @@
 import logging
 
 from datetime import timedelta, datetime
+from pathlib import Path
 
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.event import async_track_time_interval
@@ -26,7 +28,6 @@ from .api import IntexSWGApiClient
 
 _LOGGER = logging.getLogger(__name__)
 
-
 async def _async_update_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload the config entry to apply updated options (host/port or reboot)."""
     host = entry.options.get(CONF_HOST, entry.data.get(CONF_HOST))
@@ -36,6 +37,15 @@ async def _async_update_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     await hass.config_entries.async_reload(entry.entry_id)
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    # Image path in integration folder
+    static_dir = Path(__file__).parent / "static" / "icons"
+    # public URL
+    url_path = f"/api/{DOMAIN}/icons"
+    # Registration (False = no Cache-Header)
+    await hass.http.async_register_static_paths([
+        StaticPathConfig(url_path, str(static_dir), False)
+    ])
+
     return True
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
