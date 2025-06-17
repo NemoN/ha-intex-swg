@@ -40,3 +40,10 @@ http:
   use_x_forwarded_for: true
   trusted_proxies:
     - ::1
+
+input_text:
+  blank:
+    name: "Leertext"
+    initial: ""
+    min: 0
+    max: 255
