@@ -22,6 +22,7 @@ SENSOR_TYPES = [
     (("display", "brightness"), "Display Brightness"),
     (("display", "current_code"), "Display Code"),
     (("system", "uptime_seconds"), "Uptime (DD:HH:MM)"),
+    (("system", "heap"), "Free Heapspace")
 ]
 
 BOOL_SENSOR_TYPES = [
@@ -79,6 +80,10 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
 
         if self._path == ("display", "current_code"):
             self._attr_icon = "mdi:counter"
+
+        if self._path == ("system", "heap"):
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+            self._attr_icon = "mdi:memory"
 
         # device_info
         host = entry.data.get(CONF_HOST)
