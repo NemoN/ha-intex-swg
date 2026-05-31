@@ -1,6 +1,6 @@
 import logging
 
-from datetime import timedelta, datetime
+from datetime import timedelta
 from pathlib import Path
 
 from homeassistant.core import HomeAssistant
@@ -9,6 +9,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.util import dt as dt_util
 
 from .const import (
     DOMAIN, 
@@ -93,7 +94,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if reboot_enabled and not unsubscribe:
         _LOGGER.debug("Restart enabled every %s minutes", reboot_interval)
-        client._next_reboot_time = datetime.now() + timedelta(minutes=reboot_interval)
+        client._next_reboot_time = dt_util.utcnow() + timedelta(minutes=reboot_interval)
 
         async def _reboot_interval(now):
             _LOGGER.debug("Send reboot cmd now")
@@ -101,7 +102,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 await client.async_reboot()
             except Exception as err:
                 _LOGGER.error("Error during reboot: %s", err)
-            client._next_reboot_time = datetime.now() + timedelta(minutes=reboot_interval)
+            client._next_reboot_time = dt_util.utcnow() + timedelta(minutes=reboot_interval)
 
         # schedule and keep the unsubscribe callback
         entry_data["reboot_unsub"] = async_track_time_interval(
@@ -115,8 +116,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # reload on any option change
-    entry.add_update_listener(_async_update_entry)
+    # reload on any option change (auto-removed on unload to avoid duplicates)
+    entry.async_on_unload(entry.add_update_listener(_async_update_entry))
 
     return True
 

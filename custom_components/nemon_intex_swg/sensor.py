@@ -21,7 +21,7 @@ from .const import (
 SENSOR_TYPES = [
     (("display", "brightness"), "Display Brightness"),
     (("display", "current_code"), "Display Code"),
-    (("system", "uptime_seconds"), "Uptime (DD:HH:MM)"),
+    (("system", "uptime_seconds"), "Uptime"),
     (("system", "heap"), "Free Heapspace")
 ]
 
@@ -48,6 +48,9 @@ async def async_setup_entry(hass, entry, async_add_entities):
     for path, name in SENSOR_TYPES:
         entities.append(IntexSWGSensor(client, coordinator, path, name, entry))
 
+    # Human-readable uptime in addition to the numeric DURATION sensor
+    entities.append(IntexSWGUptimeFormattedSensor(client, coordinator, entry))
+
     for path, name in BOOL_SENSOR_TYPES:
         entities.append(IntexSWGBinarySensor(client, coordinator, path, name, entry))
 
@@ -70,10 +73,10 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
         # _LOGGER.debug("Init IntexSWGSensor: path=%s", self._path)
 
         if self._path == ("system", "uptime_seconds"):
-            #self._attr_native_unit_of_measurement = "s"
-            self._attr_native_unit_of_measurement = None
+            self._attr_native_unit_of_measurement = "s"
             self._attr_device_class = SensorDeviceClass.DURATION
             self._attr_state_class = SensorStateClass.MEASUREMENT
+            self._attr_icon = "mdi:clock-outline"
 
         if self._path == ("display", "brightness"):
             self._attr_icon = "mdi:brightness-6"
@@ -98,15 +101,10 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
         }            
 
     @property
-    def state(self):
+    def native_value(self):
         if self._path == ("system", "uptime_seconds"):
-            total_seconds = self._client.data.get("system", {}).get("uptime_seconds", 0)
-            days = total_seconds // 86400
-            hours = (total_seconds % 86400) // 3600
-            minutes = (total_seconds % 3600) // 60
+            return self._client.data.get("system", {}).get("uptime_seconds")
 
-            return f"{days:02d}:{hours:02d}:{minutes:02d}"
-        
         # other entities
         data = self._client.data
         for key in self._path:
@@ -115,7 +113,42 @@ class IntexSWGSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def available(self):
-        return bool(self._client.data)
+        return self.coordinator.last_update_success and bool(self._client.data)
+
+class IntexSWGUptimeFormattedSensor(CoordinatorEntity, SensorEntity):
+    """Human-readable uptime rendered as a DD:HH:MM string."""
+
+    def __init__(self, client, coordinator, entry):
+        super().__init__(coordinator)
+        self._client = client
+        self._attr_name = "Uptime (DD:HH:MM)"
+        self._attr_unique_id = f"{coordinator.name}_system_uptime_formatted"
+        self._attr_icon = "mdi:clock-outline"
+
+        # device_info
+        host = entry.data.get(CONF_HOST)
+        port = entry.data.get(CONF_PORT)
+
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.entry_id)},
+            "name": f"{DEVICE_NAME} ({host}:{port})",
+            "manufacturer": DEVICE_MANUFACTURER,
+            "model": DEVICE_MODEL,
+            "connections": {("ip", host)}
+        }
+
+    @property
+    def native_value(self):
+        total_seconds = self._client.data.get("system", {}).get("uptime_seconds", 0)
+        days = total_seconds // 86400
+        hours = (total_seconds % 86400) // 3600
+        minutes = (total_seconds % 3600) // 60
+
+        return f"{days:02d}:{hours:02d}:{minutes:02d}"
+
+    @property
+    def available(self):
+        return self.coordinator.last_update_success and bool(self._client.data)
 
 class IntexSWGBinarySensor(CoordinatorEntity, BinarySensorEntity):
     def __init__(self, client, coordinator, path, name, entry):
@@ -180,7 +213,7 @@ class IntexSWGBinarySensor(CoordinatorEntity, BinarySensorEntity):
 
     @property
     def available(self) -> bool:
-        return bool(self._client.data)
+        return self.coordinator.last_update_success and bool(self._client.data)
 
 class IntexSWGPowerSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, entry):
@@ -205,12 +238,9 @@ class IntexSWGPowerSensor(CoordinatorEntity, SensorEntity):
         }
 
     @property
-    def state(self):
+    def native_value(self):
         # returns None until client wrote a power value into data["power"]
-        #return self.coordinator.data.get("power") if self.coordinator.data else None
         p = self.coordinator.data.get("power") if self.coordinator.data else None
-
-        # _LOGGER.debug("PowerSensor.state called, coordinator.data=%s → %s", self.coordinator.data, p)
 
         return p
 
@@ -218,7 +248,7 @@ class IntexSWGPowerSensor(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         p = self.coordinator.data.get("power") if self.coordinator.data else None
 
-        return isinstance(p, (int, float))
+        return self.coordinator.last_update_success and isinstance(p, (int, float))
     
     @callback
     def _handle_coordinator_update(self) -> None:

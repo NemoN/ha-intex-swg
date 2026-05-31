@@ -50,16 +50,9 @@ class IntexSWGRebootButton(CoordinatorEntity, ButtonEntity):
         }
 
     async def async_press(self) -> None:
-        url = f"http://{self._client._host}:{self._client._port}/api/v1/intex/swg/reboot"
-        payload = {"data": {"reboot": "yes"}}
-        _LOGGER.debug("POST reboot: URL=%s, payload=%s", url, payload)
+        _LOGGER.debug("Reboot button pressed")
+        await self._client.async_reboot()
 
-        try:
-            await self._client._session.post(url, json=payload)
-        except Exception as err:
-            # _LOGGER.error("Error on reboot command: %s", err)
-            pass
-        
         # Schedule a refresh after 60 seconds
         def _refresh_cb(_):
             self.hass.async_create_task(self.coordinator.async_request_refresh())
@@ -96,21 +89,7 @@ class IntexSWGPowerOnButton(CoordinatorEntity, ButtonEntity):
         return {"active": current_power == "ON"}
     
     async def async_press(self) -> None:
-        url = f"http://{self._client._host}:{self._client._port}/api/v1/intex/swg"
-        payload = {"data": {"power": "on"}}
-
-        _LOGGER.debug("POST Power ON: URL=%s, payload=%s", url, payload)
-
-        try:
-            await self._client._session.post(url, json=payload)
-        except Exception as err:
-            _LOGGER.warning("Error sending Power ON: %s", err)
-
-        # Attempt to clear cache
-        try:
-            self._client.clear_cache()
-        except Exception as err:
-            _LOGGER.warning("Unable to clear cache: %s", err)
+        await self._client.async_set_power("on")
 
         # Schedule a brief refresh so the UI reflects the new state
         async def _refresh_cb(_):
@@ -149,20 +128,7 @@ class IntexSWGPowerOffButton(CoordinatorEntity, ButtonEntity):
         return {"active": current_power == "OFF"}
 
     async def async_press(self) -> None:
-        url = f"http://{self._client._host}:{self._client._port}/api/v1/intex/swg"
-        payload = {"data": {"power": "off"}}
-
-        _LOGGER.debug("POST Power OFF: URL=%s, payload=%s", url, payload)
-
-        try:
-            await self._client._session.post(url, json=payload)
-        except Exception as err:
-            _LOGGER.warning("Error sending Power OFF: %s", err)
-
-        try:
-            self._client.clear_cache()
-        except Exception as err:
-            _LOGGER.warning("Unable to clear cache: %s", err)
+        await self._client.async_set_power("off")
 
         # Schedule a brief refresh so the UI reflects the new state
         async def _refresh_cb(_):
@@ -201,20 +167,7 @@ class IntexSWGPowerStandbyButton(CoordinatorEntity, ButtonEntity):
         return {"active": current_power == "STANDBY"}
 
     async def async_press(self) -> None:
-        url = f"http://{self._client._host}:{self._client._port}/api/v1/intex/swg"
-        payload = {"data": {"power": "standby"}}
-
-        _LOGGER.debug("POST Power STANDBY: URL=%s, payload=%s", url, payload)
-
-        try:
-            await self._client._session.post(url, json=payload)
-        except Exception as err:
-            _LOGGER.warning("Error sending Power STANDBY: %s", err)
-
-        try:
-            self._client.clear_cache()
-        except Exception as err:
-            _LOGGER.warning("Unable to clear cache: %s", err)
+        await self._client.async_set_power("standby")
 
         # Schedule a brief refresh so the UI reflects the new state
         async def _refresh_cb(_):

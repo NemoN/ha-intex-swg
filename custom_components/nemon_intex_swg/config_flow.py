@@ -74,6 +74,9 @@ class IntexSWGConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_PORT: user_input.get(CONF_PORT, DEFAULT_PORT)
             }
 
+            await self.async_set_unique_id(f"{data[CONF_HOST]}:{data[CONF_PORT]}")
+            self._abort_if_unique_id_configured()
+
             return self.async_create_entry(
                 title=f"{data[CONF_HOST]}:{data[CONF_PORT]}",
                 data=data
@@ -98,7 +101,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         host = self.entry.options.get(CONF_HOST, self.entry.data[CONF_HOST])
         port = self.entry.options.get(CONF_PORT, self.entry.data[CONF_PORT])
         scan_int = self.entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-        reboot =  self.entry.options.get(CONF_REBOOT_ENABLED, True)
+        reboot =  self.entry.options.get(CONF_REBOOT_ENABLED, DEFAULT_REBOOT_ENABLED)
         reboot_int = self.entry.options.get(CONF_REBOOT_INTERVAL, DEFAULT_REBOOT_INTERVAL)
         power = self.entry.options.get(CONF_POWER_ENTITY, DEFAULT_POWER_ENTITY)
 
