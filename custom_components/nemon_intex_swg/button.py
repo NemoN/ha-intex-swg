@@ -12,7 +12,8 @@ from .const import (
     CONF_PORT,
     DEVICE_NAME,
     DEVICE_MANUFACTURER,
-    DEVICE_MODEL    
+    DEVICE_MODEL,
+    CAPABILITY_POWER_RELAY,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,13 +22,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     data = hass.data[DOMAIN][entry.entry_id]
     client = data["client"]
     coordinator = data["coordinator"]
-    
-    async_add_entities([
+
+    entities = [
         IntexSWGRebootButton(client, coordinator, entry),
         IntexSWGPowerOnButton(client, coordinator, entry),
-        IntexSWGPowerOffButton(client, coordinator, entry),
         IntexSWGPowerStandbyButton(client, coordinator, entry),
-    ])
+    ]
+
+    if client.capability_enabled(CAPABILITY_POWER_RELAY):
+        entities.insert(2, IntexSWGPowerOffButton(client, coordinator, entry))
+
+    async_add_entities(entities)
 
 class IntexSWGRebootButton(CoordinatorEntity, ButtonEntity):
     def __init__(self, client, coordinator, entry):

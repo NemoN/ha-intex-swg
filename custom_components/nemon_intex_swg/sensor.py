@@ -15,7 +15,8 @@ from .const import (
     CONF_PORT,
     DEVICE_NAME,
     DEVICE_MANUFACTURER,
-    DEVICE_MODEL
+    DEVICE_MODEL,
+    CAPABILITY_OZONE_LED,
 )
 
 SENSOR_TYPES = [
@@ -52,6 +53,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
     entities.append(IntexSWGUptimeFormattedSensor(client, coordinator, entry))
 
     for path, name in BOOL_SENSOR_TYPES:
+        if path == ("status", "o3_generation") and not client.capability_enabled(
+            CAPABILITY_OZONE_LED
+        ):
+            continue
         entities.append(IntexSWGBinarySensor(client, coordinator, path, name, entry))
 
     # Power sensor: only add if user configured one
@@ -254,4 +259,4 @@ class IntexSWGPowerSensor(CoordinatorEntity, SensorEntity):
     def _handle_coordinator_update(self) -> None:
         # _LOGGER.debug("Coordinator new data: %s", self.coordinator.data)
 
-        super()._handle_coordinator_update()    
+        super()._handle_coordinator_update()

@@ -1,6 +1,6 @@
 # Intex Salt-Water Chlorine Generators (SWG) — Home Assistant Integration
 
-Connect an **Intex ECO 6220 / CG-26670 / QS500 Salt-Water Chlorine Generator** to Home Assistant over a fully local REST API.
+Connect an **Intex ECO 5220 / ECO 6220 / CG-26670 / QS500 Salt-Water Chlorine Generator** to Home Assistant over a fully local REST API.
 
 ## Prerequisite Hardware
 
@@ -12,8 +12,8 @@ Install an custom **ESP32 board** flashed with the firmware from https://github.
 | Category  | Description |
 |-----------|-------------|
 | **Telemetry** | shows diplays status, uptime, free heap |
-| **Status / Alarms** | boost, sleep, ozone generation, low-flow, low/high salt, service, working, programming, display on/off |
-| **Control** | **Power ON / OFF / STANDBY** buttons |
+| **Status / Alarms** | boost, sleep, ozone generation (if supported), low-flow, low/high salt, service, working, programming, display on/off |
+| **Control** | **Power ON / STANDBY** buttons, plus **OFF** if the firmware reports a power relay |
 | **Watch-dog** | optional scheduled reboot every *n* minutes (default 720 min) |
 | **Power sensor** | map any existing wattage sensor into the SWG device card |
 | **Local-only** | `iot_class: local_polling` — no cloud involved |
@@ -48,8 +48,8 @@ Modify settings any time under **Settings → Devices & Services → Intex SWG �
 ## Entities per Generator
 
 * **Sensors:** `display_brightness`, `display_code`, `uptime` (seconds), `uptime_dd_hh_mm` (formatted), `free_heap`, `power` (optional)  
-* **Binary sensors:** `display_on`, `boost_mode`, `sleep_mode`, `o3_generation`, `low_flow`, `low_salt`, `high_salt`, `service_alarm`, `working`, `programming`  
-* **Buttons:** `reboot_esp32`, `power_on`, `power_off`, `power_standby`
+* **Binary sensors:** `display_on`, `boost_mode`, `sleep_mode`, `o3_generation` (if supported), `low_flow`, `low_salt`, `high_salt`, `service_alarm`, `working`, `programming`
+* **Buttons:** `reboot_esp32`, `power_on`, `power_standby`, `power_off` (if supported)
 
 ## Example (Lovelace button card)
 

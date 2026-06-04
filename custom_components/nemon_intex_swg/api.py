@@ -32,6 +32,13 @@ class IntexSWGApiClient:
     def clear_cache(self) -> None:
         self._last_fetch = None
 
+    def capability_enabled(self, capability: str, default: bool = True) -> bool:
+        """Return whether a device capability is enabled."""
+        capabilities = self.data.get("capabilities", {})
+        if not isinstance(capabilities, dict):
+            return default
+        return capabilities.get(capability, default) is True
+
     async def async_update(self) -> dict:
         """Fetch data from the API, caching the result for 15 seconds."""
         now = dt_util.utcnow()
