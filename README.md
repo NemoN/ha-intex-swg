@@ -1,5 +1,7 @@
 # Intex Salt-Water Chlorine Generators (SWG) — Home Assistant Integration
 
+<a href="https://www.buymeacoffee.com/nemon" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/white_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
+
 Connect an **Intex ECO 5220 / ECO 6220 / CG-26670 / QS500 Salt-Water Chlorine Generator** to Home Assistant over a fully local REST API.
 
 ## Prerequisite Hardware
